@@ -30,7 +30,7 @@ Press `Ctrl+C` to stop any demo that runs a simulation loop.
 
 ## Simulation previews
 
-Headless MP4 recordings of each demo are in [`docs/videos/`](docs/videos/). Regenerate them with:
+Lightweight GIF previews live in [`docs/previews/`](docs/previews/) so they render inline on GitHub. Regenerate them with:
 
 ```bash
 conda activate robots
@@ -45,37 +45,37 @@ python scripts/record_simulations.py --only cube_sliding
 
 ### hello_world
 
-[docs/videos/hello_world.mp4](docs/videos/hello_world.mp4)
+![hello_world preview](docs/previews/hello_world.gif)
 
 R2-D2 spawned above the ground plane with gravity enabled.
 
 ### robot_arm
 
-[docs/videos/robot_arm.mp4](docs/videos/robot_arm.mp4)
+![robot_arm preview](docs/previews/robot_arm.gif)
 
 Franka Panda joints 2 and 4 receive random position targets.
 
 ### robot_fingers
 
-[docs/videos/robot_fingers.mp4](docs/videos/robot_fingers.mp4)
+![robot_fingers preview](docs/previews/robot_fingers.gif)
 
 Joint 4 moves smoothly between random targets while the camera stays focused on the arm.
 
 ### cube_creating
 
-[docs/videos/cube_creating.mp4](docs/videos/cube_creating.mp4)
+![cube_creating preview](docs/previews/cube_creating.gif)
 
 A teal 0.5 m cube created programmatically with `createCollisionShape` / `createMultiBody`.
 
 ### cube_sliding
 
-[docs/videos/cube_sliding.mp4](docs/videos/cube_sliding.mp4)
+![cube_sliding preview](docs/previews/cube_sliding.gif)
 
 Orange cube given forward velocity and a short horizontal push.
 
 ### cube_rolling
 
-[docs/videos/cube_rolling.mp4](docs/videos/cube_rolling.mp4)
+![cube_rolling preview](docs/previews/cube_rolling.gif)
 
 Cube launched with diagonal velocity and pushed so it tumbles.
 
@@ -85,7 +85,7 @@ Cube launched with diagonal velocity and pushed so it tumbles.
 simulationRobotics/
 ├── README.md
 ├── docs/
-│   └── videos/          # MP4 previews
+│   └── previews/        # lightweight GIF previews for GitHub
 ├── robots/
 │   ├── hello_world.py
 │   ├── robot_arm.py
@@ -100,5 +100,5 @@ simulationRobotics/
 ## Notes
 
 - All interactive demos use `p.connect(p.GUI)` and open a PyBullet window.
-- `scripts/record_simulations.py` uses `p.connect(p.DIRECT)` for headless capture, so you can batch-generate videos without a display.
+- `scripts/record_simulations.py` uses `p.connect(p.DIRECT)` for headless capture, so you can batch-generate previews without a display.
 - PyBullet data assets (`plane.urdf`, `cube.urdf`, `franka_panda/panda.urdf`, etc.) come from the `pybullet_data` package bundled with PyBullet.

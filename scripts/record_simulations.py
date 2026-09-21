@@ -1,21 +1,23 @@
-"""Record headless MP4 previews for each PyBullet demo in robots/."""
+"""Record lightweight GIF previews for each PyBullet demo in robots/."""
 
 from __future__ import annotations
 
 import argparse
+from collections.abc import Callable
 from pathlib import Path
 
 import cv2
 import numpy as np
-import pybullet as p # type: ignore
+import pybullet as p  # type: ignore
 import pybullet_data
+from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
-OUTPUT_DIR = ROOT / "docs" / "videos"
+OUTPUT_DIR = ROOT / "docs" / "previews"
 
-WIDTH = 960
-HEIGHT = 720
-FPS = 30
+WIDTH = 640
+HEIGHT = 480
+FPS = 12
 GRAVITY = (0, 0, -9.81)
 TIME_STEP = 1.0 / 240.0
 
@@ -53,31 +55,49 @@ def capture(view_matrix: list[float]) -> np.ndarray:
     return cv2.cvtColor(frame, cv2.COLOR_RGBA2BGR)
 
 
-def record(name: str, steps: int, view_matrix: list[float], setup_fn) -> Path:
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    output_path = OUTPUT_DIR / f"{name}.mp4"
-    writer = cv2.VideoWriter(
-        str(output_path),
-        cv2.VideoWriter_fourcc(*"mp4v"),
-        FPS,
-        (WIDTH, HEIGHT),
+def save_gif(frames: list[np.ndarray], output_path: Path) -> Path:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    pil_frames = [
+        Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+        for frame in frames
+    ]
+    duration_ms = int(1000 / FPS)
+    pil_frames[0].save(
+        output_path,
+        save_all=True,
+        append_images=pil_frames[1:],
+        duration=duration_ms,
+        loop=0,
+        optimize=True,
+        disposal=2,
     )
+    return output_path
+
+
+def render_preview(
+    name: str,
+    steps: int,
+    view_matrix: list[float],
+    setup_fn: Callable[[], None],
+    step_hook: Callable[[int], None] | None = None,
+) -> Path:
+    frames: list[np.ndarray] = []
+    capture_every = max(1, round((1.0 / FPS) / TIME_STEP))
 
     connect()
     setup_fn()
-    capture_every = max(1, round((1.0 / FPS) / TIME_STEP))
-
     try:
         for step in range(steps):
+            if step_hook is not None:
+                step_hook(step)
             p.stepSimulation()
             if step % capture_every == 0:
-                writer.write(capture(view_matrix))
+                frames.append(capture(view_matrix))
     finally:
-        writer.release()
         if p.isConnected():
             p.disconnect()
 
-    return output_path
+    return save_gif(frames, OUTPUT_DIR / f"{name}.gif")
 
 
 def record_hello_world() -> Path:
@@ -86,7 +106,12 @@ def record_hello_world() -> Path:
         p.loadURDF("plane.urdf")
         p.loadURDF("r2d2.urdf", [0, 0, 3], p.getQuaternionFromEuler([0, 0, 0]))
 
-    return record("hello_world", steps=480, view_matrix=camera([0, 0, 0.5]), setup_fn=setup)
+    return render_preview(
+        "hello_world",
+        steps=360,
+        view_matrix=camera([0, 0, 0.5]),
+        setup_fn=setup,
+    )
 
 
 def record_robot_arm() -> Path:
@@ -98,38 +123,39 @@ def record_robot_arm() -> Path:
             [0, 0, 0, 1],
             useFixedBase=True,
         )
-        joint_limits = {
-            joint_id: (
-                p.getJointInfo(panda_id, joint_id)[8],
-                p.getJointInfo(panda_id, joint_id)[9],
-            )
-            for joint_id in (2, 4)
-        }
-        record_robot_arm.joint_limits = joint_limits
         record_robot_arm.panda_id = panda_id
+        record_robot_arm.limits = {
+            2: (
+                p.getJointInfo(panda_id, 2)[8],
+                p.getJointInfo(panda_id, 2)[9],
+            ),
+            4: (
+                p.getJointInfo(panda_id, 4)[8],
+                p.getJointInfo(panda_id, 4)[9],
+            ),
+        }
 
     def step_hook(step: int) -> None:
+        if step % 8 != 0:
+            return
         panda_id = record_robot_arm.panda_id
-        limits = record_robot_arm.joint_limits
-        if step % 8 == 0:
-            joint_2 = np.random.uniform(*limits[2])
-            joint_4 = np.random.uniform(*limits[4])
-            p.setJointMotorControl2(
-                panda_id,
-                2,
-                p.POSITION_CONTROL,
-                targetPosition=joint_2,
-            )
-            p.setJointMotorControl2(
-                panda_id,
-                4,
-                p.POSITION_CONTROL,
-                targetPosition=joint_4,
-            )
+        limits = record_robot_arm.limits
+        p.setJointMotorControl2(
+            panda_id,
+            2,
+            p.POSITION_CONTROL,
+            targetPosition=np.random.uniform(*limits[2]),
+        )
+        p.setJointMotorControl2(
+            panda_id,
+            4,
+            p.POSITION_CONTROL,
+            targetPosition=np.random.uniform(*limits[4]),
+        )
 
-    return record_with_hook(
+    return render_preview(
         "robot_arm",
-        steps=360,
+        steps=300,
         view_matrix=camera([0.0, 0.0, 0.5], distance=1.8, yaw=55, pitch=-25),
         setup_fn=setup,
         step_hook=step_hook,
@@ -148,7 +174,8 @@ def record_robot_fingers() -> Path:
         record_robot_fingers.panda_id = panda_id
         record_robot_fingers.jlower = p.getJointInfo(panda_id, 4)[8]
         record_robot_fingers.jupper = p.getJointInfo(panda_id, 4)[9]
-        record_robot_fingers.target = p.getJointState(panda_id, 4)[0]
+        record_robot_fingers.start = p.getJointState(panda_id, 4)[0]
+        record_robot_fingers.target = record_robot_fingers.start
         record_robot_fingers.move_steps = 0
 
     def step_hook(step: int) -> None:
@@ -177,9 +204,9 @@ def record_robot_fingers() -> Path:
             )
             record_robot_fingers.move_steps -= 1
 
-    return record_with_hook(
+    return render_preview(
         "robot_fingers",
-        steps=640,
+        steps=560,
         view_matrix=camera([0.35, 0.0, 0.45], distance=0.9, yaw=45, pitch=-25),
         setup_fn=setup,
         step_hook=step_hook,
@@ -204,7 +231,12 @@ def record_cube_creating() -> Path:
             baseOrientation=[0, 0, 0, 1],
         )
 
-    return record("cube_creating", steps=240, view_matrix=camera([0, 0, 0.25]), setup_fn=setup)
+    return render_preview(
+        "cube_creating",
+        steps=120,
+        view_matrix=camera([0, 0, 0.25]),
+        setup_fn=setup,
+    )
 
 
 def record_cube_rolling() -> Path:
@@ -225,7 +257,7 @@ def record_cube_rolling() -> Path:
         record_cube_rolling.cube_id = cube_id
         record_cube_rolling.step_count = 0
 
-    def step_hook(step: int) -> None:
+    def step_hook(_step: int) -> None:
         if record_cube_rolling.step_count < 50:
             p.applyExternalForce(
                 record_cube_rolling.cube_id,
@@ -236,9 +268,9 @@ def record_cube_rolling() -> Path:
             )
         record_cube_rolling.step_count += 1
 
-    return record_with_hook(
+    return render_preview(
         "cube_rolling",
-        steps=480,
+        steps=360,
         view_matrix=camera([0, 0, 0.25]),
         setup_fn=setup,
         step_hook=step_hook,
@@ -263,7 +295,7 @@ def record_cube_sliding() -> Path:
         record_cube_sliding.cube_id = cube_id
         record_cube_sliding.step_count = 0
 
-    def step_hook(step: int) -> None:
+    def step_hook(_step: int) -> None:
         if record_cube_sliding.step_count < 50:
             p.applyExternalForce(
                 record_cube_sliding.cube_id,
@@ -274,46 +306,13 @@ def record_cube_sliding() -> Path:
             )
         record_cube_sliding.step_count += 1
 
-    return record_with_hook(
+    return render_preview(
         "cube_sliding",
-        steps=480,
+        steps=360,
         view_matrix=camera([0, 0, 0.25]),
         setup_fn=setup,
         step_hook=step_hook,
     )
-
-
-def record_with_hook(
-    name: str,
-    steps: int,
-    view_matrix: list[float],
-    setup_fn,
-    step_hook,
-) -> Path:
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    output_path = OUTPUT_DIR / f"{name}.mp4"
-    writer = cv2.VideoWriter(
-        str(output_path),
-        cv2.VideoWriter_fourcc(*"mp4v"),
-        FPS,
-        (WIDTH, HEIGHT),
-    )
-    capture_every = max(1, round((1.0 / FPS) / TIME_STEP))
-
-    connect()
-    setup_fn()
-    try:
-        for step in range(steps):
-            step_hook(step)
-            p.stepSimulation()
-            if step % capture_every == 0:
-                writer.write(capture(view_matrix))
-    finally:
-        writer.release()
-        if p.isConnected():
-            p.disconnect()
-
-    return output_path
 
 
 RECORDERS = {
