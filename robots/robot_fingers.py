@@ -12,9 +12,13 @@ class ArmEnv():
         p.connect(p.GUI)
         p.resetSimulation()
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
+        # so you’re not stuck at a bad default view.
         self._zoom_camera()
         p.setGravity(0, 0, -9.81)
         # Hide the extra RGB/depth preview panes so the 3D view stays large.
+        # control extra preview panels in the PyBullet
+        # p.configureDebugVisualizer(option, value)
+        # 0 means OFF, 1 means ON
         p.configureDebugVisualizer(p.COV_ENABLE_RGB_BUFFER_PREVIEW, 0)
         p.configureDebugVisualizer(p.COV_ENABLE_DEPTH_BUFFER_PREVIEW, 0)
         p.configureDebugVisualizer(p.COV_ENABLE_SEGMENTATION_MARK_PREVIEW, 0)
@@ -37,8 +41,8 @@ class ArmEnv():
         # Smaller cameraDistance = closer zoom. Aim at the arm, not the floor.
         p.resetDebugVisualizerCamera(
             cameraDistance=0.9,
-            cameraYaw=45,
-            cameraPitch=-25,
+            cameraYaw=45, # Orbit left/right (degrees)
+            cameraPitch=-25, # Look up/down (negative = look down)
             cameraTargetPosition=[0.35, 0.0, 0.45],
         )
 
@@ -52,6 +56,7 @@ class ArmEnv():
         start_position = p.getJointState(self.panda_id, 4)[0]
         # Interpolate so each command is a visible sweep, not a one-frame jump.
         for alpha in np.linspace(0.0, 1.0, 80):
+            # Interpolate — 80 steps from start → new_position so motion is smooth, not a snap.
             interpolated = start_position + alpha * (new_position - start_position)
             p.setJointMotorControl2(
                 self.panda_id,
