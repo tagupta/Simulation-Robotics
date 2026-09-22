@@ -1,0 +1,115 @@
+<?xml version="1.0" ?>
+<robot name="table">
+
+  <!-- ================= TABLE TOP ================= -->
+  <link name="table_top">
+
+    <visual>
+      <origin xyz="0 0 0.48"/>
+      <geometry>
+        <box size="0.5 0.5 0.04"/>
+      </geometry>
+      <material name="wood">
+        <color rgba="0.6 0.4 0.2 1"/>
+      </material>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0.48"/>
+      <geometry>
+        <box size="0.5 0.5 0.04"/>
+      </geometry>
+    </collision>
+
+  </link>
+
+  <!-- ================= LEG TEMPLATE ================= -->
+  <!-- Leg dimensions -->
+  <!-- Height = 0.46 (so total table height = 0.5) -->
+
+  <link name="leg_fl">
+    <visual>
+      <origin xyz="0.23 0.23 0.23"/>
+      <geometry>
+        <box size="0.04 0.04 0.46"/>
+      </geometry>
+      <material name="metal">
+        <color rgba="0.2 0.2 0.2 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.23 0.23 0.23"/>
+      <geometry>
+        <box size="0.04 0.04 0.46"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="leg_fr">
+    <visual>
+      <origin xyz="0.23 -0.23 0.23"/>
+      <geometry>
+        <box size="0.04 0.04 0.46"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0.23 -0.23 0.23"/>
+      <geometry>
+        <box size="0.04 0.04 0.46"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="leg_bl">
+    <visual>
+      <origin xyz="-0.23 0.23 0.23"/>
+      <geometry>
+        <box size="0.04 0.04 0.46"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="-0.23 0.23 0.23"/>
+      <geometry>
+        <box size="0.04 0.04 0.46"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="leg_br">
+    <visual>
+      <origin xyz="-0.23 -0.23 0.23"/>
+      <geometry>
+        <box size="0.04 0.04 0.46"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="-0.23 -0.23 0.23"/>
+      <geometry>
+        <box size="0.04 0.04 0.46"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- ================= FIXED JOINTS ================= -->
+
+  <joint name="leg_fl_joint" type="fixed">
+    <parent link="table_top"/>
+    <child link="leg_fl"/>
+  </joint>
+
+  <joint name="leg_fr_joint" type="fixed">
+    <parent link="table_top"/>
+    <child link="leg_fr"/>
+  </joint>
+
+  <joint name="leg_bl_joint" type="fixed">
+    <parent link="table_top"/>
+    <child link="leg_bl"/>
+  </joint>
+
+  <joint name="leg_br_joint" type="fixed">
+    <parent link="table_top"/>
+    <child link="leg_br"/>
+  </joint>
+
+</robot>
