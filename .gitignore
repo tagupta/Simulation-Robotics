@@ -13,3 +13,4 @@ __pycache__/
 
 .venv/
 .venv312
+assets/generated_markers/
