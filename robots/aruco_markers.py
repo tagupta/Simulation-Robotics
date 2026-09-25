@@ -53,9 +53,9 @@ class ArucoMarkerDetection:
         time_step = 1.0 / 240.0
         p.setTimeStep(time_step)
         # getCameraImage otherwise redraws these extra panes every frame.
-        p.configureDebugVisualizer(p.COV_ENABLE_RGB_BUFFER_PREVIEW, 0)
-        p.configureDebugVisualizer(p.COV_ENABLE_DEPTH_BUFFER_PREVIEW, 0)
-        p.configureDebugVisualizer(p.COV_ENABLE_SEGMENTATION_MARK_PREVIEW, 0)
+        # p.configureDebugVisualizer(p.COV_ENABLE_RGB_BUFFER_PREVIEW, 0)
+        # p.configureDebugVisualizer(p.COV_ENABLE_DEPTH_BUFFER_PREVIEW, 0)
+        # p.configureDebugVisualizer(p.COV_ENABLE_SEGMENTATION_MARK_PREVIEW, 0)
         self.zoom_camera()
         self.configure_camera_aruco_marker()
         self.slider_ids = self.add_camera_position_and_orientation_parameters()

@@ -19,14 +19,9 @@ cd simulationRobotics
 | [`robots/cube_creating.py`](robots/cube_creating.py) | Create a 0.5 m box from collision/visual shapes (no URDF)                 | `python robots/cube_creating.py` |
 | [`robots/cube_sliding.py`](robots/cube_sliding.py)   | Push a cube horizontally with initial velocity and external force         | `python robots/cube_sliding.py`  |
 | [`robots/cube_rolling.py`](robots/cube_rolling.py)   | Launch a cube with diagonal velocity so it tumbles across the plane       | `python robots/cube_rolling.py`  |
+| [`robots/aruco_markers.py`](robots/aruco_markers.py) | Fixed simulated camera; ArUco detection and 6-DOF pose (OpenCV `solvePnP`) | `python robots/aruco_markers.py` |
 
 Press `Ctrl+C` to stop any demo that runs a simulation loop.
-
-## What changed in this commit
-
-- Added three cube demos: **creating**, **sliding**, and **rolling**
-- Moved scripts out of `robots/PyBullet/` into `robots/`
-- Renamed `sample.py` to `robot_fingers.py` and documented camera/debug-visualizer settings
 
 ## Simulation previews
 
@@ -79,6 +74,12 @@ Orange cube given forward velocity and a short horizontal push.
 
 Cube launched with diagonal velocity and pushed so it tumbles.
 
+### aruco_markers
+
+![aruco_markers preview](docs/previews/aruco_markers.gif)
+
+Simulated camera watches a textured ArUco marker; sliders move the tag while detection runs at 30 Hz and reports pose in the window.
+
 ## Project layout
 
 ```text
@@ -92,7 +93,9 @@ simulationRobotics/
 │   ├── robot_fingers.py
 │   ├── cube_creating.py
 │   ├── cube_sliding.py
-│   └── cube_rolling.py
+│   ├── cube_rolling.py
+│   └── aruco_markers.py
+├── URDFS/               # simple_camera, ar_marker_box, robot models
 └── scripts/
     └── record_simulations.py
 ```

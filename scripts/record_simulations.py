@@ -13,6 +13,7 @@ import pybullet_data
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
+URDF_DIR = ROOT / "URDFS"
 OUTPUT_DIR = ROOT / "docs" / "previews"
 
 WIDTH = 640
@@ -277,6 +278,48 @@ def record_cube_rolling() -> Path:
     )
 
 
+def record_aruco_markers() -> Path:
+    def setup() -> None:
+        p.loadURDF("plane.urdf", [0, 0, 0], [0, 0, 0, 1])
+        p.loadURDF(
+            str(URDF_DIR / "simple_camera.urdf"),
+            [0, 0, 0.5],
+            p.getQuaternionFromEuler([1.57, 0, 0]),
+            useFixedBase=True,
+        )
+        ar_marker_box_id = p.loadURDF(
+            str(URDF_DIR / "ar_marker_box.urdf"),
+            [0, -1.07, 0.5],
+            p.getQuaternionFromEuler([0, 0, 0]),
+            useFixedBase=True,
+        )
+        texture_id = p.loadTexture(str(URDF_DIR / "images" / "ar_marker_box.png"))
+        p.changeVisualShape(ar_marker_box_id, -1, textureUniqueId=texture_id)
+        record_aruco_markers.marker_id = ar_marker_box_id
+
+    def step_hook(step: int) -> None:
+        t = step / 240.0
+        x = 0.35 * np.sin(0.7 * t)
+        y = -1.07 + 0.25 * np.cos(0.5 * t)
+        z = 0.5 + 0.15 * np.sin(0.9 * t)
+        roll = 0.4 * np.sin(0.6 * t)
+        pitch = 0.5 * np.cos(0.4 * t)
+        yaw = 0.6 * np.sin(0.8 * t)
+        p.resetBasePositionAndOrientation(
+            record_aruco_markers.marker_id,
+            [x, y, z],
+            p.getQuaternionFromEuler([roll, pitch, yaw]),
+        )
+
+    return render_preview(
+        "aruco_markers",
+        steps=480,
+        view_matrix=camera([0, 0, 0.1], distance=1.5, yaw=-150, pitch=-20),
+        setup_fn=setup,
+        step_hook=step_hook,
+    )
+
+
 def record_cube_sliding() -> Path:
     def setup() -> None:
         p.loadURDF("plane.urdf", [0, 0, 0], [0, 0, 0, 1])
@@ -322,6 +365,7 @@ RECORDERS = {
     "cube_creating": record_cube_creating,
     "cube_rolling": record_cube_rolling,
     "cube_sliding": record_cube_sliding,
+    "aruco_markers": record_aruco_markers,
 }
 
 
