@@ -78,7 +78,7 @@ Cube launched with diagonal velocity and pushed so it tumbles.
 
 ![aruco_markers preview](docs/previews/aruco_markers.gif)
 
-Simulated camera watches a textured ArUco marker; sliders move the tag while detection runs at 30 Hz and reports pose in the window.
+Simulated camera watches a textured ArUco marker; the preview runs the same ArUco + `solvePnP` path as the live demo and draws the red pose readout on each frame.
 
 ## Project layout
 
